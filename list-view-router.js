@@ -1,53 +1,60 @@
-/**
- * Hacer una solicitud GET a una ruta específica para listar las tareas que están completas.
- * Hacer una solicitud GET a una ruta específica para listar las tareas que están incompletas.
- */
-
 const express = require("express");
 const router = express.Router();
 const {listTask, tasks} = require("./objects")
+const Errors = require("./Errors");
 
+// Middleware para gestionar qué los parámetros seán correctos de lo contrario debe devolver el error
+const validateParams = (req, res, next) => {
+    const completed = req.query.completed;
+    if (completed && completed !== "true" && completed !== "false") {
+        return next(Errors.invalidParameter);
+    }
+    next();
+};
+
+// Middleware de manejo de errores local
+const errorHandler = (error, req, res, next) => {
+    res.status(400).json({ error: error });
+  };
 
 // Muestra la lista de tareas existentes
 router.get("/", (req, res) => {
     res.json(listTask());
 })
 
-//Ruta para mostrar lista de tareas completas con params
-router.get("/completed/:completed", (req, res) => {
-    const completed = req.params.completed;
+// Muestra una tarea individual por id
+router.get("/:id", (req, res, next) => {
+    const taskId = req.params.id;
+    const task = tasks.find((task) => task.id === taskId);
+
+    if(task) {
+        res.json(task);
+    } else {
+        next(Errors.taskNotFound)
+    }
+})
+
+// Rutas en para listar el estado de las tareas en un solo router
+// /status?completed=true y /status?completed=false
+router.get("/status", validateParams, (req, res, next) => {
+    const completed = req.query.completed;
+
     if (completed === "true") {
         const completedTasks = tasks.filter((task) => task.completed);
         if (completedTasks.length === 0) {
-            res.status(404).json({error: "Al momento, ninguna tarea está completa"});
-        } else {
-            res.json(completedTasks);
+            return next(Errors.incompleteTask);
         }
-    } else {
-        res.status(400).json({ error: "La ruta no es válida" });
-    }
-});
-
-//Ruta para mostrar lista de tareas incompletas con Params
-router.get("/incompleted/:incompleted", (req, res) => {
-    const incompleted = req.params.incompleted;
-    if(incompleted === "true") {
+        res.json(completedTasks);
+    } else if (completed === "false") {
         const incompleteTasks = tasks.filter((task) => !task.completed);
         res.json(incompleteTasks);
     } else {
-        res.status(400).json({error: "Ruta inválida"})
+        next(Errors.invalidRoute)
     }
+});
 
-})
-
-// Mostrar una tarea en específico usando params 
-// router.get("/:indicator/:description/:completed", (req, res) => {
-//     const indicator = req.params.indicator;
-//     const description = req.params.description;
-//     const completed = req.params.completed;
-
-//     res.json({indicator, description, completed})
-// })
+// Aplico middleware de manejo de errores local 
+router.use(errorHandler);
 
 module.exports = router;
 

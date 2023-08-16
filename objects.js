@@ -1,12 +1,11 @@
-// constructor de objetos
-
-class Task {
-    constructor(id, description, completed) {
-        this.id = id;
-        this.description = description;
-        this.completed = completed;
-    }
+const createTask = function(id, description, completed) {
+  return {
+    id: id,
+    description: description,
+    completed: completed,
+  };
 }
+
 const tasks = [];
 
 const addTask = function(task) {
@@ -35,4 +34,18 @@ const completeTask = function(id) {
     }
 }
 
-module.exports = {Task, tasks, addTask, listTask, deleteTask, repeateTask, completeTask}
+const users = [
+    {
+        id: 1,
+        username: "usuario-uno",
+        password: "12345"
+    },
+    {
+        id: 2,
+        username: "usuario-2",
+        password: "678910"
+    }
+]
+
+
+module.exports = {createTask, tasks, addTask, listTask, deleteTask, repeateTask, completeTask, users}
